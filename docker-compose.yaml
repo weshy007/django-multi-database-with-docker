@@ -1,0 +1,53 @@
+version: '3.1'
+services:
+  db:
+    container_name: db
+    image: postgres
+    restart: always
+    environment:
+      POSTGRES_USER: admin15
+      POSTGRES_PASSWORD: adgzcb
+      POSTGRES_DB: docker_django
+    volumes:
+      - ./data:/var/lib/postgresql/data
+    ports:
+      - 5432:5432
+  replica:
+    container_name: replica
+    image: mongo
+    restart: always
+    ports:
+      - 27017:27017
+    volumes:
+      - ./data_mdb:/data/db
+    
+  app:
+    build: ./.core
+    # ports:
+    #   - 8000:8000
+    volumes:
+      - ./.core:/app
+    environment:
+      - PORT=8000
+      - SECRET_KEY="django-insecure-uq_4of_lv4t1j7mg!i4-k#@&bbwfc7&b=0^^sp3=bx(%t05bba"
+      - PSQL_USER=admin15
+      - PSQL_PASSWORD=adgzcb
+      - PSQL_HOST=db
+      - PSQL_PORT=5432
+      - PSQL_DB=docker_django
+      - REPLICA=replica
+      - REPLICA1=replica1
+      - REPLICA_HOST=mongodb://replica:27017/
+
+    depends_on:
+      - db
+      - replica
+  nginx:
+    container_name: nginx
+    image: nginx:latest
+    volumes: 
+      - ./nginx/conf.d:/etc/nginx/conf.d
+    depends_on:
+      - app
+    ports:
+      - 8000:8000
